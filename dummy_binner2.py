@@ -7,12 +7,12 @@ import pandas as pd
 from tqdm import tqdm
 from Bio import SeqIO
 from itertools import product
+from sklearn.cluster import OPTICS
 from scipy.cluster import hierarchy
 from scipy.spatial.distance import pdist
 from scipy.spatial.distance import squareform
 from scipy.spatial.distance import is_valid_y
-from sklearn.cluster import OPTICS
-
+from multiprocessing import Pool, cpu_count
 
 def dummy_binner(mode, sequences, coverages=None, minlen=1000, k=4, threshold=0.1):
     """
@@ -69,6 +69,10 @@ def dummy_binner(mode, sequences, coverages=None, minlen=1000, k=4, threshold=0.
            
     return bins
     
+def merge_reads(read_pair):
+    r1, r2 = read_pair
+    seq = r1.seq + r2.seq.reverse_complement()
+    return (r1.id, str(seq))
 
 def load_seqs(infile, infile2=None, mode='contigs'):
     print('# Loading sequences into memory')
@@ -78,15 +82,21 @@ def load_seqs(infile, infile2=None, mode='contigs'):
             infile = gzip.open(infile, 'rt')
         for record in SeqIO.parse(infile, 'fasta'):
             hs.append((record.id, str(record.seq)))
+
     elif mode == 'reads' and infile2:
         if infile.endswith('gz'):
             infile = gzip.open(infile, 'rt')
-        for record1 in SeqIO.parse(infile, 'fastq'):
-            hs.append((record1.id, str(record1.seq)))
         if infile2.endswith('gz'):
             infile2 = gzip.open(infile2, 'rt')
-        for record2 in SeqIO.parse(infile2, 'fastq'):
-            hs.append((record2.id, str(record2.seq)))
+
+        infile = SeqIO.parse(infile, 'fastq')
+        infile2 = SeqIO.parse(infile2, 'fastq')    
+
+        print('# Merge the paired reads using multiple processes')
+        with Pool(processes=cpu_count()) as pool:
+            hs = pool.map(merge_reads, zip(infile, infile2))
+            print(f'It was obtained {len(hs)} merged pairs')
+
     elif mode == 'reads':
         if infile.endswith('gz'):
             infile = gzip.open(infile, 'rt')
