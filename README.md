@@ -20,7 +20,7 @@ in <https://github.com/celiosantosjr/dummybinner>. Accessed in Month/Year.
 Dummy binner uses python>3.9 and a set of packages easilly installed using 
 
 ```
-$ pip install biopython numpy pandas scipy scikit-learn tqdm
+$ pip install biopython numpy pandas scipy scikit-learn tqdm pysam
 ```
 
 The versions required follow:
@@ -33,6 +33,7 @@ The versions required follow:
 | scipy | 1.9.1 |
 | sklearn | 0.0 |
 | tqdm | 4.64.0 |
+| pysam | 0.16.0.1 |
 
 ## Usage
 
@@ -61,6 +62,14 @@ contigs (--threshold). The basic usage cases are:
 
 ```
 python3 dummy_binner2.py --infile <contigs.fa> --mode contigs
+```
+
+To generate coverage profiles to be applied in the binner, please use the script
+`make_coverages.py`. This script works in a set of bam files pre-sorted and
+indexed. The basic usage is as follows:
+
+```
+python3 make_coverages.py [-h] -c CONTIGS -o OUTPUT bam_files [bam_files ...]
 ```
 
 ## Contact
